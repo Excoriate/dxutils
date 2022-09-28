@@ -1,4 +1,4 @@
-package terraform
+package dx-utils
 
 import(
   "universe.dagger.io/alpine"
