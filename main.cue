@@ -1,11 +1,11 @@
-package dx-utils
+package terraform
 
 import(
   "universe.dagger.io/alpine"
   "universe.dagger.io/bash"
 )
 
-#Run: {
+#Generate: {
 	bash.#Run & {
 		always: true
 		script: contents: """
