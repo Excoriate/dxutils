@@ -1,0 +1,30 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# macOS
+**/.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+**/tmp/
+*.out
+
+# Terraform
+**/terraform.tfstate
+**/terraform.tfstate.backup
+.terraform
+
+# terragrunt
+.terragrunt*
+
+!/tests/terratest/pkg/environment/environment.go
