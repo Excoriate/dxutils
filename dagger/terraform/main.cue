@@ -1,4 +1,4 @@
-package terraform_docs
+package terraform
 
 import(
   "universe.dagger.io/alpine"
