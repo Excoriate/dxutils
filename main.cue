@@ -8,10 +8,9 @@ import(
 
 
 #Run: {
-    _img: alpine.#Build & {
+		_img: alpine.#Build & {
         packages: bash: _
     }
-
 
     bash.#Run & {
         always: true
