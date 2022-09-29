@@ -1,15 +1,24 @@
 package dxutils
 
 import(
-  "universe.dagger.io/bash"
   "dagger.io/dagger"
   "dagger.io/dagger/core"
 
 
 #Run: {
-		bash.#Run & {
-				script: contents: """
-					Hello!!!
-					"""
-	}
+    // The input directory
+    dir: dagger.#FS
+
+    // The name of the person to greet
+    name: string | *"world"
+
+    write: core.#WriteFile & {
+        input: dir
+        path: "hello-\(name).txt"
+        contents: "hello, \(name)!"
+    }
+
+    // The directory with greeting message added
+    result: write.output
 }
+
