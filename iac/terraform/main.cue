@@ -1,4 +1,4 @@
-package tfdocs
+package dxutils
 
 import(
   "universe.dagger.io/alpine"
