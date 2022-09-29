@@ -7,10 +7,13 @@ import(
   "dagger.io/dagger/core"
 
 
-#Generate: {
-	bash.#Run & {
-		script: contents: """
-			echo "Hello from my package!"
-		"""
-	}
+#Run: {
+    _img: alpine.#Build & {
+        packages: bash: _
+    }
+
+    bash.#Run & {
+        always: true
+        input:  _img.output
+    }
 }
