@@ -28,4 +28,4 @@
 .terragrunt*
 
 !/tests/terratest/pkg/environment/environment.go
-cue.mod/
+cue.mod
