@@ -1,0 +1,8 @@
+---
+version: '3'
+
+includes:
+  terraform:
+    taskfile: ./actions/terraform/TaskFile.yml
+    dir: ./actions/terraform
+

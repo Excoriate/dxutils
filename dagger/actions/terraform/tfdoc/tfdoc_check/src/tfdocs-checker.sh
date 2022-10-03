@@ -117,32 +117,6 @@ function main() {
 # Ensures that the scripts/ and its shell/bash
 # utilities are properly sourced.
 ######################################
-# shellcheck disable=SC1090
-#declare SCRIPTS_DIR
-#declare SCRIPTS_TF_DIR
-#declare SCRIPTS_UTILS_DIR
-#SCRIPTS_DIR="scripts"
-#SCRIPTS_TF_DIR="$SCRIPTS_DIR/terraform"
-#SCRIPTS_UTILS_DIR="$SCRIPTS_DIR/utils"
-#
-#
-#if [[ ! -d "$SCRIPTS_DIR" ]]; then
-#  echo "Scripts directory not found, but it's required. Current path is $PWD"
-#  echo
-#  exit 1
-#else
-#  echo "Found scripts directory: $SCRIPTS_DIR"
-#
-#  for file in "$SCRIPTS_TF_DIR"/*.sh; do
-#    # shellcheck disable=SC1090
-#    source "$file"
-#  done
-#
-#  for file in "$SCRIPTS_UTILS_DIR"/*.sh; do
-#    # shellcheck disable=SC1090
-#    source "$file"
-#  done
-#fi
 
 source fs.sh
 source printer.sh
