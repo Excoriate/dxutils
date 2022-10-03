@@ -113,19 +113,34 @@ function main() {
 }
 
 
+#######################################
+# Ensures that the scripts/ and its shell/bash
+# utilities are properly sourced.
+######################################
 # shellcheck disable=SC1090
-if [[ ! -d "./utils" ]]; then
-  echo "utils directory not found, but it's required. Current path is $PWD"
-  echo "Current files are: "
-  ls -ltrah
+declare SCRIPTS_DIR
+declare SCRIPTS_TF_DIR
+declare SCRIPTS_UTILS_DIR
+SCRIPTS_DIR="scripts"
+SCRIPTS_TF_DIR="$SCRIPTS_DIR/terraform"
+SCRIPTS_UTILS_DIR="$SCRIPTS_DIR/utils"
+
+if [[ ! -d "$SCRIPTS_DIR" ]]; then
+  echo "Scripts directory not found, but it's required. Current path is $PWD"
   echo
   exit 1
 else
-  for file in "$(dirname "$(realpath "${BASH_SOURCE[0]}")")"/utils/*.sh; do
+  echo "Found scripts directory: $SCRIPTS_DIR"
+
+  for file in "$SCRIPTS_TF_DIR"/*.sh; do
     # shellcheck disable=SC1090
-    echo "sourced file: $file"
     source "$file"
-done
+  done
+
+  for file in "$SCRIPTS_UTILS_DIR"/*.sh; do
+    # shellcheck disable=SC1090
+    source "$file"
+  done
 fi
 
 declare WORKING_DIR
