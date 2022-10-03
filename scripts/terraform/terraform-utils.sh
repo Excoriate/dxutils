@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Set of interesting terraform utils.s
+# Set of common operations, actions and checks performed against
+# IAC and terraform code.
 # Copyright 2022 alextorresruiz
 
 
@@ -56,6 +57,7 @@ function is_tf_docs_config_exist(){
 #   WORKING_DIR: Directory where the module lives
 # Arguments:
 #   dir: Directory where the module lives.
+#######################################
 function check_if_backend_config_exists() {
   # Search for a file named backend.tf, if exist, make a cat. If not, fail with exit 1.
   local tf_dir=${1:-$WORKING_DIR}
@@ -83,6 +85,7 @@ function check_if_backend_config_exists() {
 #   WORKING_DIR: Directory where the module lives
 # Arguments:
 #   dir: Directory where the module lives.
+#######################################
 function clean_dot_terraform_folder_if_exists() {
   local tf_dir=${1:-$WORKING_DIR}
   local dot_terraform_folder="$tf_dir/.terraform"
@@ -102,6 +105,7 @@ function clean_dot_terraform_folder_if_exists() {
 #   WORKING_DIR: Directory where the module lives
 # Arguments:
 #   dir: Directory where the module lives.
+#######################################
 function check_if_tf_docs_config_file_is_empty(){
   local tf_dir=${1:-$WORKING_DIR}
   local tf_docs_config_file="$tf_dir/.terraform-docs.yml"

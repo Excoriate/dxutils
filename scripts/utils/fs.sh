@@ -23,6 +23,7 @@ function check_if_directory_exists() {
 # Globals:
 # Arguments:
 #   $1 - file path
+#######################################
 function check_if_file_has_content() {
     if [ ! -s "$1" ]; then
         echo "File $1 does not exist or is empty"
