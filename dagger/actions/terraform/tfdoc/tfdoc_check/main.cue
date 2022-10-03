@@ -1,4 +1,4 @@
-package tfdoc_check_config
+package tfdoc_check
 
 import (
 	"dagger.io/dagger"
