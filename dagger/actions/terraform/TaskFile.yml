@@ -3,9 +3,8 @@ version: '3'
 
 tasks:
   # Generate symlinks, used and ref. by the main scripts within the /src directory.
-  symlinks:
-    dir: tfdoc/tfdoc_check/src
-    cmds:
-      - ln -s ../../../../../../scripts/utils/fs.sh fs.sh
-      - ln -s ../../../../../../scripts/utils/printer.sh printer.sh
-
+    symlinks:
+        dir: tfdoc/tfdoc_check/src
+        cmds:
+            - ln -s ../../../../../../scripts/utils/fs.sh fs.sh
+            - ln -s ../../../../../../scripts/utils/printer.sh printer.sh

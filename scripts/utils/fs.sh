@@ -35,4 +35,3 @@ function check_if_file_has_content() {
         exit 1
     fi
 }
-

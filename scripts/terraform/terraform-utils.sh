@@ -118,4 +118,3 @@ function check_if_tf_docs_config_file_is_empty(){
 }
 
 declare WORKING_DIR
-

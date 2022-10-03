@@ -2,12 +2,15 @@
 version: '3'
 
 includes:
-  dagger:
-    taskfile: ./dagger/TaskFile.yml
-    dir: ./dagger
+    dagger:
+        taskfile: ./dagger/TaskFile.yml
+        dir: ./dagger
 
 tasks:
     docs:
         cmds:
             - ./scripts/infrastructure/DX/generate-terraform-docs.sh
 
+    pre-commit:
+        cmds:
+            - pre-commit run --show-diff-on-failure --color always --all-files {{.CLI_ARGS}} # Pass arguments using -- <arg1> <arg2> ...
