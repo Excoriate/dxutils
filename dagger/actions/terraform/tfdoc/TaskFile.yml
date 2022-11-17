@@ -1,0 +1,28 @@
+---
+version: '3'
+
+tasks:
+  # Generate symlinks, used and ref. by the main scripts within the /src directory.
+    symlinks:
+        dir: tfdoc_check/src
+        cmds:
+            - ln -s ../../../../../../scripts/utils/fs.sh fs.sh || true
+            - ln -s ../../../../../../scripts/utils/printer.sh printer.sh || true
+
+    init:
+        dir: tfdoc_check
+        cmds:
+            - rm -rf cue.mod || true
+            - dagger project init;
+            - dagger project update;
+
+    test:
+      deps: [symlinks, init]
+      dir: tfdoc_check/test # Ensure it's executed from the /test directory.
+      cmds:
+            - ls -ltrah ../cue.mod
+            # Fake symlink, that emulates what dagger does when dagger project update runs.
+            - mkdir -p ../cue.mod/pkg/github.com/Excoriate/dxutils/dagger/actions/terraform/tfdoc || true
+            - ls -ltrah $(pwd)/../../tfdoc_check || true
+            - ln -s $(pwd)/../../tfdoc_check ../cue.mod/pkg/github.com/Excoriate/dxutils/dagger/actions/terraform/tfdoc/tfdoc_check || true
+            - dagger do --help
