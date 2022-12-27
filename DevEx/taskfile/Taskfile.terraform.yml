@@ -1,0 +1,136 @@
+---
+version: '3'
+
+vars:
+    TF_VARS_FILE: '{{default "config/fixtures.tfvars" .TF_VARS_FILE}}'
+    TF_BACKEND_CONFIG: '{{default "config/remote.config" .TF_BACKEND_CONFIG}}'
+    TF_WORKING_DIR: '{{default "." .TF_WORKING_DIR}}'
+    AWS_ACCESS_KEY_ID: '{{default "" .AWS_ACCESS_KEY_ID}}'
+    AWS_SECRET_ACCESS_KEY: '{{default "" .AWS_SECRET_ACCESS_KEY}}'
+
+tasks:
+    check-workdir:
+        desc: Validate whether the working directory passed is valid
+        cmds:
+            - |
+              if [ -z "{{.TF_WORKING_DIR}}" ]; then
+                echo "Working directory is not set"
+                exit 0
+              elif [ ! -d "{{.TF_WORKING_DIR}}" ]; then
+                echo "Working directory does not exist or is not a directory"
+                exit 1
+              else
+                if [ -z "$(find {{.TF_WORKING_DIR}} -name '*.tf' -print -quit)" ]; then
+                  echo "No valid .tf files found in working directory"
+                  exit 1
+                else
+                  echo "Working directory is set, exists, and contains valid .tf files: {{.TF_WORKING_DIR}}"
+                fi
+              fi
+
+    init:
+        deps: [check-workdir]
+        desc: Run Terraform init
+        cmds:
+            - |
+              echo "Working directory: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
+              cd {{.TF_WORKING_DIR}}
+
+              if [ -n "{{.TF_BACKEND_CONFIG}}" ] && [ -f "{{.TF_BACKEND_CONFIG}}" ]; then
+                echo "Using backend configuration file: {{.TF_BACKEND_CONFIG}}"
+                terraform init -backend-config={{.TF_BACKEND_CONFIG}}
+              else
+                echo "No backend configuration file provided, running terraform init without -backend-config flag"
+                terraform init
+              fi
+
+    plan:
+        desc: Run Terraform plan
+        deps: [init]
+        cmds:
+            - |
+              echo "Running Terraform plan in {{.TF_WORKING_DIR}}"
+              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+
+              cd {{.TF_WORKING_DIR}}
+
+              if [ -n "{{.TF_VARS_FILE}}" ]; then
+                terraform plan -var-file={{.TF_VARS_FILE}}
+              else
+                terraform plan
+              fi
+
+    apply:
+        desc: Run Terraform apply
+        deps: [init]
+        cmds:
+            - |
+              echo "Running Terraform Apply in {{.TF_WORKING_DIR}}"
+              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+
+              cd {{.TF_WORKING_DIR}}
+
+              if [ -n "{{.TF_VARS_FILE}}" ]; then
+                terraform apply -var-file={{.TF_VARS_FILE}} -auto-approve
+              else
+                terraform apply -auto-approve
+              fi
+
+    destroy:
+        desc: Run Terraform destroy
+        deps: [init]
+        cmds:
+            - |
+              echo "Running Terraform Destroy in {{.TF_WORKING_DIR}}"
+              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+
+              cd {{.TF_WORKING_DIR}}
+
+              if [ -n "{{.TF_VARS_FILE}}" ]; then
+                terraform destroy -var-file={{.TF_VARS_FILE}} -auto-approve
+              else
+                terraform destroy -auto-approve
+              fi
+
+    fmt:
+        desc: Run Terraform fmt check
+        deps: [check-workdir]
+        cmds:
+            - cmd: terraform fmt -recursive -write=false {{ .CLI_ARGS }}
+
+    fmt-fix:
+        desc: Run Terraform fmt fixing the unformatted files
+        deps: [check-workdir]
+        cmds:
+            - cmd: terraform fmt -recursive -write=true {{ .CLI_ARGS }}
+
+    validate:
+        desc: Run Terraform validation
+        deps: [check-workdir, init]
+        cmds:
+            - cmd: terraform validate {{ .CLI_ARGS }}
+
+    lint:
+        desc: Run Terraform lint
+        cmds:
+            - |
+              if [ ! -f .tflint.hcl ]; then
+                echo "Error: .tflint.hcl file not found"
+                exit 1
+              fi
+
+              tflint --init
+              tflint .
+
+    docs:
+        desc: Generate Terraform docs
+        cmds:
+            - |
+              if [ ! -f .terraform-docs.yml ]; then
+                echo "Error: .terraform-docs.yml file not found"
+                exit 1
+              fi
+              cat .terraform-docs.yml
+              terraform-docs .

@@ -1,16 +1,73 @@
 ---
 version: '3'
 
+###########################################################################################
+# ENVIRONMENT VARIABLES CONFIGURATION
+# ----------------------------------
+# - These variables are used to configure the environment for the task.
+# - It's set while calling the task. E.g.: ENV=master task <task_name>
+# - Remember to generate the .env.<env>.aws or .env.<env>.terraform previously.
+###########################################################################################
+env:
+  TARGET_ENVIRONMENT: '{{.ENV}}'
+
+dotenv: ['.env.{{.TARGET_ENVIRONMENT}}.aws', '.env.{{.TARGET_ENVIRONMENT}}.terraform']
+
 includes:
-    dagger:
-        taskfile: ./dagger/TaskFile.yml
-        dir: ./dagger
+  common:
+    taskfile: ./DevEx/taskfile/Taskfile.common.yml
 
+  devex:
+    taskfile: ./DevEx/taskfile/Taskfile.devex.yml
+
+
+  ###########################################################################################
+  # TERRAFORM/TERRAGRUNT MODULES
+  # ----------------------------------
+  # - These are specific IAC modules, either in Terragrunt o terraform that will be executed.
+  # - Normally, these modules have their own TaskFile.yml in the folder infrastructure/terraform
+  ###########################################################################################
 tasks:
-    docs:
-        cmds:
-            - ./scripts/infrastructure/DX/generate-terraform-docs.sh
+  default:
+    cmds:
+      - task: common:default
 
-    pre-commit:
-        cmds:
-            - pre-commit run --show-diff-on-failure --color always --all-files {{.CLI_ARGS}} # Pass arguments using -- <arg1> <arg2> ...
+  pre-commit:
+    desc: Run all the pre-configured pre-commit hooks.
+    cmds:
+      - task: common:hooks
+
+  gen-env-aws:
+    desc: Generate an .env.<env>.aws file for a given environment
+    cmds:
+      - task: devex:gen-env-aws
+
+  gen-env-terraform:
+    desc: Generate an .env.<env>.terraform file for a given environment
+    cmds:
+      - task: devex:gen-env-terraform
+
+  tfstate-init:
+    desc: Bootstrap a tfstate S3 bucket, and a Lock table in 'master' environment.
+    dir: ./infrastructure/bootstrap-master-account/tfstate-creator
+    cmds:
+      - |
+        if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+          echo "Error: AWS access key ID is not set"
+          exit 1
+        fi
+
+        if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+          echo "Error: AWS secret access key is not set"
+          exit 1
+        fi
+
+        if [ -f "tfstate-creator" ]; then
+          rm tfstate-creator
+        fi
+
+        go build -o tfstate-creator || { echo "Error building tfstate-creator"; exit 1; }
+        ./tfstate-creator || { echo "Error running tfstate-creator"; exit 1; }
+
+        rm tfstate-creator || { echo "Error deleting bucket-creator"; exit 1; }
+

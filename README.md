@@ -24,15 +24,6 @@ Just, ensure you have the necessary tools installed. Some of those are:
 - 🧰 [TaskFile](https://taskfile.dev/#/) — for the automation of the tasks.
 
 
-<!-- ROADMAP -->
-## 🗓Roadmap
-
-- [ ] ❤️ Add `terraform-utils.sh` scripts.
-- [ ] ❤️ Pipeline in Dagger.io, for common [terraform](https://www.terraform.io/) tasks.
-
-See the [open issues](https://github.com/Excoriate/terraform-registry/issues) for a full list of proposed features (and known issues). Also, your contributions are more than welcome — just ensure following the [contributing guidelines](docs/guides/contribution_guidelines.md).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- CONTACT -->
 ## Contact
