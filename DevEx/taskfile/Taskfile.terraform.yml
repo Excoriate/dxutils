@@ -2,11 +2,11 @@
 version: '3'
 
 vars:
-    TF_VARS_FILE: '{{default "config/fixtures.tfvars" .TF_VARS_FILE}}'
-    TF_BACKEND_CONFIG: '{{default "config/remote.config" .TF_BACKEND_CONFIG}}'
-    TF_WORKING_DIR: '{{default "." .TF_WORKING_DIR}}'
-    AWS_ACCESS_KEY_ID: '{{default "" .AWS_ACCESS_KEY_ID}}'
-    AWS_SECRET_ACCESS_KEY: '{{default "" .AWS_SECRET_ACCESS_KEY}}'
+    TF_WORKING_DIR:
+    TF_VARS_FILE:
+    TF_BACKEND_CONFIG:
+    AWS_ACCESS_KEY_ID:
+    AWS_SECRET_ACCESS_KEY:
 
 tasks:
     check-workdir:
@@ -14,123 +14,284 @@ tasks:
         cmds:
             - |
               if [ -z "{{.TF_WORKING_DIR}}" ]; then
-                echo "Working directory is not set"
-                exit 0
-              elif [ ! -d "{{.TF_WORKING_DIR}}" ]; then
-                echo "Working directory does not exist or is not a directory"
+                echo "Working directory is not set (check variable TF_WORKING_DIR)"
+                echo "Working dir -> {{.TF_WORKING_DIR}}"
                 exit 1
-              else
-                if [ -z "$(find {{.TF_WORKING_DIR}} -name '*.tf' -print -quit)" ]; then
-                  echo "No valid .tf files found in working directory"
-                  exit 1
-                else
-                  echo "Working directory is set, exists, and contains valid .tf files: {{.TF_WORKING_DIR}}"
-                fi
               fi
 
+              if [ ! -d "{{.TF_WORKING_DIR}}" ]; then
+                  echo "Working directory is not a valid directory (check variable TF_WORKING_DIR)"
+                  echo "Path examined: $(pwd)/{{.TF_WORKING_DIR}}"
+                  exit 1
+              else
+                  echo "Working directory is valid. Found in path $(pwd)"
+                  echo "Checking .tf files on it..."
+                  ls -ltrah {{.TF_WORKING_DIR}}
+              fi
+
+              if [ -z "$(find {{.TF_WORKING_DIR}} -name '*.tf' -print -quit)" ]; then
+                echo "No valid .tf files found in working directory {{.TF_WORKING_DIR}}"
+                exit 1
+              else
+                echo "Found .tf files in working directory {{.TF_WORKING_DIR}}"
+                echo "All validation passed"
+                echo
+              fi
+
+              echo "Validation Result"
+              echo "============================================================"
+              echo "All passed"
+        silent: true
+
     init:
-        deps: [check-workdir]
+        deps:
+            - task: check-workdir
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         desc: Run Terraform init
         cmds:
             - |
-              echo "Working directory: {{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
               echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
 
               cd {{.TF_WORKING_DIR}}
 
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terraform command INIT"
+              echo "============================================================"
+
               if [ -n "{{.TF_BACKEND_CONFIG}}" ] && [ -f "{{.TF_BACKEND_CONFIG}}" ]; then
                 echo "Using backend configuration file: {{.TF_BACKEND_CONFIG}}"
-                terraform init -backend-config={{.TF_BACKEND_CONFIG}}
+                terraform init -backend-config="{{.TF_BACKEND_CONFIG}}"
               else
                 echo "No backend configuration file provided, running terraform init without -backend-config flag"
                 terraform init
               fi
+        silent: true
 
     plan:
         desc: Run Terraform plan
-        deps: [init]
+        deps:
+            - task: init
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
-              echo "Running Terraform plan in {{.TF_WORKING_DIR}}"
-              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
 
               cd {{.TF_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terraform command PLAN"
+              echo "===============r============================================="
 
               if [ -n "{{.TF_VARS_FILE}}" ]; then
                 terraform plan -var-file={{.TF_VARS_FILE}}
+                echo "[ ! ] Using variables file: {{.TF_VARS_FILE}}"
               else
+                echo "[ ! ] No variables file provided, running terraform plan without -var-file flag"
                 terraform plan
               fi
+        silent: true
 
     apply:
         desc: Run Terraform apply
-        deps: [init]
+        deps:
+            - task: init
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
-              echo "Running Terraform Apply in {{.TF_WORKING_DIR}}"
-              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
 
               cd {{.TF_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terraform command APPLY"
+              echo "===============r============================================="
 
               if [ -n "{{.TF_VARS_FILE}}" ]; then
                 terraform apply -var-file={{.TF_VARS_FILE}} -auto-approve
               else
                 terraform apply -auto-approve
               fi
+        silent: true
+
 
     destroy:
         desc: Run Terraform destroy
-        deps: [init]
+        deps:
+            - task: init
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
-              echo "Running Terraform Destroy in {{.TF_WORKING_DIR}}"
-              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
 
               cd {{.TF_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terraform command DESTROY"
+              echo "===============r============================================="
 
               if [ -n "{{.TF_VARS_FILE}}" ]; then
                 terraform destroy -var-file={{.TF_VARS_FILE}} -auto-approve
               else
                 terraform destroy -auto-approve
               fi
+        silent: true
+
 
     fmt:
         desc: Run Terraform fmt check
-        deps: [check-workdir]
+        deps:
+            - task: check-workdir
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
-            - cmd: terraform fmt -recursive -write=false {{ .CLI_ARGS }}
+            - |
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
+
+              cd {{.TF_WORKING_DIR}}
+
+              echo "          \\   ^__^ "
+              echo "           \\  (oo)\\_______"
+              echo "              (__)\\       )\\/\\"
+              echo "                  ||----w |"
+              echo "                  ||     ||"
+              echo "Running Terraform command FORMAT"
+              echo "============================================================"
+
+              terraform fmt -recursive -write=false
+        silent: true
+
 
     fmt-fix:
-        desc: Run Terraform fmt fixing the unformatted files
-        deps: [check-workdir]
+        desc: Run Terraform fmt fixing the non-formatted files
+        deps:
+            - task: check-workdir
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
-            - cmd: terraform fmt -recursive -write=true {{ .CLI_ARGS }}
+            - |
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
+
+              cd {{.TF_WORKING_DIR}}
+
+              echo "          \\   ^__^ "
+              echo "           \\  (oo)\\_______"
+              echo "              (__)\\       )\\/\\"
+              echo "                  ||----w |"
+              echo "                  ||     ||"
+              echo "Running Terraform command FORMAT with FIX"
+              echo "============================================================"
+
+              terraform fmt -recursive -write=true
+        silent: true
+
 
     validate:
         desc: Run Terraform validation
-        deps: [check-workdir, init]
+        deps:
+            - task: init
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
-            - cmd: terraform validate {{ .CLI_ARGS }}
+            - |
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
+
+              cd {{.TF_WORKING_DIR}}
+
+              echo "          \\   ^__^ "
+              echo "           \\  (oo)\\_______"
+              echo "              (__)\\       )\\/\\"
+              echo "                  ||----w |"
+              echo "                  ||     ||"
+              echo "Running Terraform command VALIDATE"
+              echo "============================================================"
+
+              terraform validate
+        silent: true
 
     lint:
         desc: Run Terraform lint
+        deps:
+            - task: check-workdir
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
+
+              cd {{.TF_WORKING_DIR}}
+
+              echo "          \\   ^__^ "
+              echo "           \\  (oo)\\_______"
+              echo "              (__)\\       )\\/\\"
+              echo "                  ||----w |"
+              echo "                  ||     ||"
+              echo "Running Terraform command LINTER (TfLint)"
+              echo "============================================================"
+
               if [ ! -f .tflint.hcl ]; then
                 echo "Error: .tflint.hcl file not found"
                 exit 1
               fi
 
+              tflint -v
+
               tflint --init
               tflint .
+        silent: true
 
     docs:
         desc: Generate Terraform docs
+        deps:
+            - task: check-workdir
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
+
+
+              cd {{.TF_WORKING_DIR}}
+
+              echo "          \\   ^__^ "
+              echo "           \\  (oo)\\_______"
+              echo "              (__)\\       )\\/\\"
+              echo "                  ||----w |"
+              echo "                  ||     ||"
+              echo "Running Terraform command DOCS"
+              echo "============================================================"
+
               if [ ! -f .terraform-docs.yml ]; then
                 echo "Error: .terraform-docs.yml file not found"
                 exit 1
               fi
+
               cat .terraform-docs.yml
-              terraform-docs .
+              terraform-docs -c .terraform-docs.yml md . > README.md
+        silent: true

@@ -2,7 +2,6 @@
 version: '3'
 
 env:
-#  SKIP_copy: true
 
 tasks:
     clean:
@@ -19,6 +18,12 @@ tasks:
         cmds:
             - task: clean
             - git clean -f -xd --exclude=".idea" --exclude=".env" --exclude="*.tfvars" --exclude="backend.hcl" --exclude="backend.tf" --exclude="Taskfile.yml"
+
+    hooks-install:
+        cmds:
+            - ./DevEx/scripts/hooks/install-pre-commit-hooks-deps.sh
+            - pre-commit install
+            - pre-commit autoupdate
 
     hooks:
         cmds:

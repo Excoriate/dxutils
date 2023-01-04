@@ -10,77 +10,147 @@ tasks:
         cmds:
             - |
               if [ -z "{{.TF_WORKING_DIR}}" ]; then
-                echo "Working directory is not set"
-                exit 0
-              elif [ ! -d "{{.TF_WORKING_DIR}}" ]; then
-                echo "Working directory does not exist or is not a directory"
+                echo "Working directory is not set (check variable TF_WORKING_DIR)"
+                echo "Working dir -> {{.TF_WORKING_DIR}}"
                 exit 1
-              else
-                if [ -z "$(find {{.TF_WORKING_DIR}} -name '*.hcl' -print -quit)" ]; then
-                  echo "No valid .hcl files found in working directory"
-                  exit 1
-                elif [ -z "$(find {{.TF_WORKING_DIR}} -name 'terragrunt.hcl' -print -quit)" ]; then
-                  echo "No terragrunt.hcl file found in working directory"
-                  exit 1
-                else
-                  echo "Working directory is set, exists, and contains valid .hcl files, including a terragrunt.hcl file: {{.TF_WORKING_DIR}}"
-                fi
               fi
 
+              if [ ! -d "{{.TF_WORKING_DIR}}" ]; then
+                  echo "Working directory is not a valid directory (check variable TF_WORKING_DIR)"
+                  echo "Path examined: $(pwd)/{{.TF_WORKING_DIR}}"
+                  exit 1
+              else
+                  echo "Working directory is valid. Found in path $(pwd)"
+                  echo "Checking .tf files on it..."
+                  ls -ltrah {{.TF_WORKING_DIR}}
+              fi
+
+              if [ -z "$(find {{.TF_WORKING_DIR}} -name '*.hcl' -print -quit)" ]; then
+                echo "No valid .hcl files found in working directory"
+                exit 1
+              elif [ -z "$(find {{.TF_WORKING_DIR}} -name 'terragrunt.hcl' -print -quit)" ]; then
+                echo "No terragrunt.hcl file found in working directory"
+                exit 1
+              fi
+
+              echo "Validation Result"
+              echo "============================================================"
+              echo "All passed"
+        silent: true
+
     init:
-        deps: [check-workdir]
+        deps:
+            - task: check-workdir
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         desc: Run Terragrunt init
         cmds:
             - |
-              echo "Working directory: {{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
               echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
 
               cd {{.TF_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command INIT"
+              echo "============================================================"
+
               terragrunt init
+        silent: true
 
     plan:
         desc: Run Terragrunt plan
-        deps: [init]
+        deps:
+            - task: init
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
-              echo "Running Terragrunt plan in {{.TF_WORKING_DIR}}"
-              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
 
               cd {{.TF_WORKING_DIR}}
 
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command PLAN"
+              echo "============================================================"
+
               terragrunt plan
+        silent: true
 
     apply:
         desc: Run Terragrunt apply
-        deps: [init]
+        deps:
+            - task: init
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
-              echo "Running Terragrunt Apply in {{.TF_WORKING_DIR}}"
-              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
 
               cd {{.TF_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command APPLY"
+              echo "============================================================"
+
               terragrunt apply -auto-approve
+        silent: true
 
     destroy:
         desc: Run Terragrunt destroy
-        deps: [init]
+        deps:
+            - task: init
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
-              echo "Running Terragrunt Destroy in {{.TF_WORKING_DIR}}"
-              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
 
               cd {{.TF_WORKING_DIR}}
-              terragrunt destroy
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command DESTROY"
+              echo "============================================================"
+
+              terragrunt destroy -auto-approve
+        silent: true
 
     lint:
         desc: Run Terragrunt Linters and Validators
-        deps: [check-workdir]
+        deps:
+            - task: check-workdir
+              vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
-              echo "Running Terragrunt fmt check in {{.TF_WORKING_DIR}}"
-              echo "Full path is $(pwd)/{{.TF_WORKING_DIR}}"
+              echo "Working directory passed: {{.TF_WORKING_DIR}}"
+              echo "Full path: $(pwd)/{{.TF_WORKING_DIR}}"
 
               cd {{.TF_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command LINTERS"
+              echo "============================================================"
+
               terragrunt fmt -check
               terragrunt hclfmt
               terragrunt validate-inputs --terragrunt-strict-validate
+        silent: true
