@@ -37,6 +37,12 @@ tasks:
     cmds:
       - task: common:hooks
 
+  asdf-install:
+    desc: Build and run the ASDF wrapper CLI.
+    dir: package-managers/asdf
+    cmds:
+      - cargo build --release
+      - ./target/release/asdf {{.CLI_ARGS}}
   gen-env-aws:
     desc: Generate an .env.<env>.aws file for a given environment
     cmds:
@@ -70,4 +76,3 @@ tasks:
         ./tfstate-creator || { echo "Error running tfstate-creator"; exit 1; }
 
         rm tfstate-creator || { echo "Error deleting bucket-creator"; exit 1; }
-

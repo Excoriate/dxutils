@@ -29,3 +29,9 @@
 
 !/tests/terratest/pkg/environment/environment.go
 cue.mod
+
+
+# Rust related stuffs
+**/target/
+**/Cargo.lock
+**/Cargo.toml.orig

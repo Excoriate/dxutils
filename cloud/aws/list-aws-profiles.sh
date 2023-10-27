@@ -42,9 +42,8 @@ function list_aws_profiles() {
     aws configure get sso_region --profile "$profile"
     aws configure get sso_role_name --profile "$profile"
 
-    eval "$(aws2-wrap --profile "$profile" --export)"
-
     gum style --foreground 212 "Exported AWS profile with SSO: [$profile]"
+    eval "$(aws2-wrap --profile "$profile" --export)"
   else
     gum style --foreground 212 "Exported AWS profile without SSO: [$profile]"
     export AWS_SECRET_ACCESS_KEY=$(aws configure get "$profile".aws_secret_access_key)
