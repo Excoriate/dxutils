@@ -157,6 +157,7 @@ func cloneWithTimeout(ctx context.Context, url string, path string, defaultBranc
 			URL:           url,
 			Progress:      os.Stdout,
 			ReferenceName: plumbing.NewBranchReferenceName(defaultBranch),
+			SingleBranch:  false,
 		})
 		ch <- err
 	}()
@@ -185,6 +186,7 @@ func pullWithTimeout(ctx context.Context, path string) error {
 
 		err = w.Pull(&git.PullOptions{
 			RemoteName: "origin",
+			Force:      true,
 		})
 		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			ch <- err
