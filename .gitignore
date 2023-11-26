@@ -35,3 +35,8 @@ cue.mod
 **/target/
 **/Cargo.lock
 **/Cargo.toml.orig
+
+# All Go binaries
+**/bin/
+github-cloner
+gitlab-cloner
