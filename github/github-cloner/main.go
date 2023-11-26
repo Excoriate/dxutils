@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/go-git/go-git/v5/config"
 	"os"
 	"path/filepath"
 	"sync"
@@ -146,7 +147,7 @@ func cloneOrPullRepo(url string, path string, timeoutFlag string, defaultBranch 
 	}
 
 	// Else, it's already a repository, try pull.
-	return pullWithTimeout(ctx, path)
+	return pullWithTimeout(ctx, path, defaultBranch)
 }
 
 // cloneWithTimeout attempts to clone a repository at given url to a destination path, but will time out and abort the operation if it takes too long.
@@ -171,27 +172,45 @@ func cloneWithTimeout(ctx context.Context, url string, path string, defaultBranc
 	}
 }
 
-func pullWithTimeout(ctx context.Context, path string) error {
+func pullWithTimeout(ctx context.Context, path string, defaultBranch string) error {
 	pterm.Info.Printf("Pulling %s\n", path)
 	ch := make(chan error)
 	go func() {
 		r, err := git.PlainOpen(path)
 		if err != nil {
 			ch <- err
+			return
 		}
 		w, err := r.Worktree()
 		if err != nil {
 			ch <- err
+			return
 		}
 
-		err = w.Pull(&git.PullOptions{
+		// Fetch the latest commits from the origin remote
+		err = r.Fetch(&git.FetchOptions{
 			RemoteName: "origin",
+			RefSpecs:   []config.RefSpec{"+refs/heads/*:refs/remotes/origin/*"},
 			Force:      true,
 		})
 		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			ch <- err
+			return
 		}
-		ch <- nil
+
+		// Gets the hash of the remote default branch
+		ref, err := r.Reference(plumbing.NewRemoteReferenceName("origin", defaultBranch), true)
+		if err != nil {
+			ch <- err
+			return
+		}
+
+		// Reset the current working directory to the fetched hash
+		err = w.Reset(&git.ResetOptions{
+			Commit: ref.Hash(),
+			Mode:   git.HardReset,
+		})
+		ch <- err
 	}()
 
 	select {
