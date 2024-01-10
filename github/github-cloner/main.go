@@ -71,22 +71,30 @@ func main() {
 	pterm.Success.Printf("Cloned %d repositories from GitHub\n", doneTasks)
 }
 
-// cloneAllGitHubRepositories lists and clones repositories from the specified organization or user.
 func cloneAllGitHubRepositories(ctx context.Context, client *github.Client, target, baseDir string) {
 	defer wg.Done()
 
+	// Initialize the options for listing repositories, ensuring we include private ones.
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 		Type:        "all",
+		Visibility:  "all",
 	}
 
+	// Loop through all pages of repositories
 	for {
+		// Get the list of repositories for the current page
 		repos, resp, err := client.Repositories.List(ctx, target, opt)
 		if err != nil {
 			pterm.Error.Printf("Failed to list repositories for %s: %v\n", target, err)
 			return
 		}
 
+		// Update the total task count and the progress bar's total.
+		totalTasks += len(repos)
+		totalBar.WithTotal(totalTasks)
+
+		// Queue each repository for cloning
 		for _, repo := range repos {
 			if repo.Archived != nil && *repo.Archived {
 				continue // Skip archived repositories.
@@ -103,13 +111,16 @@ func cloneAllGitHubRepositories(ctx context.Context, client *github.Client, targ
 			repoURL := repo.GetCloneURL()
 			destDir := filepath.Join(baseDir, repoName)
 
-			totalTasks++
+			// Send the clone task to the worker
+			wg.Add(1)
 			cloneTasksChan <- cloneTask{repoURL: repoURL, destDir: destDir, defaultBranch: branchName}
 		}
 
+		// Check if we've reached the last page; if so, break out of the loop
 		if resp.NextPage == 0 {
 			break
 		}
+		// Set the page number for the next request
 		opt.Page = resp.NextPage
 	}
 }
