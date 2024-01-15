@@ -48,6 +48,10 @@ func main() {
 	baseDir := flag.String("path", "./", "Path to clone repositories")
 	orgOrUser := flag.String("target", "", "GitHub organization or user to clone from")
 	isOrg := flag.Bool("org", false, "Specify if the target is an organization")
+	repoLimit := flag.Int("limit", 100, "Limit of repositories to clone")
+
+	pterm.Info.Printf("Cloning projects from %s to %s\n", *orgOrUser, *baseDir)
+	pterm.Info.Println("RepoLimit set to", *repoLimit)
 
 	flag.Parse()
 
@@ -75,7 +79,7 @@ func main() {
 	go cloneWorker(cloneTasksChan)
 
 	wg.Add(1)
-	go cloneAllGitHubRepositories(ctx, gitHubClient, *orgOrUser, *baseDir, *isOrg)
+	go cloneAllGitHubRepositories(ctx, gitHubClient, *orgOrUser, *baseDir, *isOrg, *repoLimit)
 
 	wg.Wait()
 	close(cloneTasksChan)
@@ -85,7 +89,7 @@ func main() {
 	pterm.Success.Printf("Cloned %d repositories from GitHub\n", doneTasks)
 }
 
-func getReposByOrg(ctx context.Context, client *github.Client, org string) ([]*github.Repository, error) {
+func getReposByOrg(ctx context.Context, client *github.Client, org string, limit int) ([]*github.Repository, error) {
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 		Type:        "all",
@@ -98,15 +102,15 @@ func getReposByOrg(ctx context.Context, client *github.Client, org string) ([]*g
 			return nil, err
 		}
 		allRepos = append(allRepos, repos...)
-		if resp.NextPage == 0 {
+		if len(allRepos) >= limit || resp.NextPage == 0 {
 			break
 		}
 		opt.Page = resp.NextPage
 	}
-	return allRepos, nil
+	return allRepos[:limit], nil
 }
 
-func getReposByUser(ctx context.Context, client *github.Client, user string) ([]*github.Repository, error) {
+func getReposByUser(ctx context.Context, client *github.Client, user string, limit int) ([]*github.Repository, error) {
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 		Type:        "all",
@@ -119,24 +123,24 @@ func getReposByUser(ctx context.Context, client *github.Client, user string) ([]
 			return nil, err
 		}
 		allRepos = append(allRepos, repos...)
-		if resp.NextPage == 0 {
+		if len(allRepos) >= limit || resp.NextPage == 0 {
 			break
 		}
 		opt.Page = resp.NextPage
 	}
-	return allRepos, nil
+	return allRepos[:limit], nil
 }
 
-func cloneAllGitHubRepositories(ctx context.Context, client *github.Client, target, baseDir string, isOrg bool) {
+func cloneAllGitHubRepositories(ctx context.Context, client *github.Client, target, baseDir string, isOrg bool, limit int) {
 	defer wg.Done()
 
 	var allRepos []*github.Repository
 	var err error
 
 	if isOrg {
-		allRepos, err = getReposByOrg(ctx, client, target)
+		allRepos, err = getReposByOrg(ctx, client, target, limit)
 	} else {
-		allRepos, err = getReposByUser(ctx, client, target)
+		allRepos, err = getReposByUser(ctx, client, target, limit)
 	}
 
 	if err != nil {
@@ -259,8 +263,6 @@ func pullWithTimeout(ctx context.Context, path string, defaultBranch string, isO
 
 		// Fetch the latest commits from the origin remote
 		if isOrg {
-			pterm.Warning.Println("Pulling from an organization requires GITHUB_USERNAME and GITHUB_TOKEN to be set")
-
 			err = r.Fetch(&git.FetchOptions{
 				RemoteName: "origin",
 				RefSpecs:   []config.RefSpec{"+refs/heads/*:refs/remotes/origin/*"},
