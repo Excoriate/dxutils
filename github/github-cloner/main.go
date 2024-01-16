@@ -89,48 +89,6 @@ func main() {
 	pterm.Success.Printf("Cloned %d repositories from GitHub\n", doneTasks)
 }
 
-func getReposByOrg(ctx context.Context, client *github.Client, org string, limit int) ([]*github.Repository, error) {
-	opt := &github.RepositoryListByOrgOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
-		Type:        "all",
-	}
-
-	var allRepos []*github.Repository
-	for {
-		repos, resp, err := client.Repositories.ListByOrg(ctx, org, opt)
-		if err != nil {
-			return nil, err
-		}
-		allRepos = append(allRepos, repos...)
-		if len(allRepos) >= limit || resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-	return allRepos[:limit], nil
-}
-
-func getReposByUser(ctx context.Context, client *github.Client, user string, limit int) ([]*github.Repository, error) {
-	opt := &github.RepositoryListOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
-		Type:        "all",
-	}
-
-	var allRepos []*github.Repository
-	for {
-		repos, resp, err := client.Repositories.List(ctx, user, opt)
-		if err != nil {
-			return nil, err
-		}
-		allRepos = append(allRepos, repos...)
-		if len(allRepos) >= limit || resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-	return allRepos[:limit], nil
-}
-
 func cloneAllGitHubRepositories(ctx context.Context, client *github.Client, target, baseDir string, isOrg bool, limit int) {
 	defer wg.Done()
 
@@ -149,8 +107,7 @@ func cloneAllGitHubRepositories(ctx context.Context, client *github.Client, targ
 	}
 
 	// Update the total task count and the progress bar's total.
-	totalTasks += len(allRepos)
-	totalBar.WithTotal(totalTasks)
+	totalBar.WithTotal(len(allRepos))
 
 	// Queue each repository for cloning
 	for _, repo := range allRepos {
@@ -171,8 +128,61 @@ func cloneAllGitHubRepositories(ctx context.Context, client *github.Client, targ
 
 		// Send the clone task to the worker
 		wg.Add(1)
-		cloneTasksChan <- cloneTask{repoURL: repoURL, destDir: destDir, defaultBranch: branchName, isOrg: isOrg}
+		cloneTasksChan <- cloneTask{
+			repoURL:       repoURL,
+			destDir:       destDir,
+			defaultBranch: branchName,
+			isOrg:         isOrg,
+		}
 	}
+}
+
+func getReposByOrg(ctx context.Context, client *github.Client, org string, limit int) ([]*github.Repository, error) {
+	opt := &github.RepositoryListByOrgOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+		Type:        "all",
+	}
+
+	var allRepos []*github.Repository
+	for {
+		repos, resp, err := client.Repositories.ListByOrg(ctx, org, opt)
+		if err != nil {
+			return nil, err
+		}
+		allRepos = append(allRepos, repos...)
+		if len(allRepos) >= limit || resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
+	}
+	if len(allRepos) > limit {
+		allRepos = allRepos[:limit]
+	}
+	return allRepos, nil
+}
+
+func getReposByUser(ctx context.Context, client *github.Client, user string, limit int) ([]*github.Repository, error) {
+	opt := &github.RepositoryListOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+		Type:        "all",
+	}
+
+	var allRepos []*github.Repository
+	for {
+		repos, resp, err := client.Repositories.List(ctx, user, opt)
+		if err != nil {
+			return nil, err
+		}
+		allRepos = append(allRepos, repos...)
+		if len(allRepos) >= limit || resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
+	}
+	if len(allRepos) > limit {
+		allRepos = allRepos[:limit]
+	}
+	return allRepos, nil
 }
 
 func cloneWorker(tasks <-chan cloneTask) {
