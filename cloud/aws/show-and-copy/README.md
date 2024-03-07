@@ -15,7 +15,6 @@ Before you start, ensure you have a clipboard utility installed:
 - Windows (WSL): `clip.exe` (pre-installed)
 
 ## Installation 🛠️
-
 1. Open your shell configuration file:
   - Bash: `~/.bashrc`
   - Zsh: `~/.zshrc`
