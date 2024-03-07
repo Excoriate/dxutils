@@ -23,6 +23,7 @@ Before you start, ensure you have a clipboard utility installed:
 3. Reload your shell configuration:
   - Bash: `source ~/.bashrc`
   - Zsh: `source ~/.zshrc`
+  -
 
 ## Usage 📖
 
